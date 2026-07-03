@@ -1976,9 +1976,7 @@
     const cardUserManagement = document.getElementById('card-user-management');
 
     // ROLE DEFINITIONS
-    const ROLES_DATA = [
-      { id: 'usuario', name: 'Usuario', category: 'color-user', colorHex: '#aaaaaa' },
-      
+    const ROLES_DATA = [      
       { id: 'game_owner', name: 'Game Owner', category: 'color-owner', colorHex: '#ffd000' },
       { id: 'game_co_owner', name: 'Game Co-Owner', category: 'color-owner', colorHex: '#ff8400' },
       { id: 'game_community_manager', name: 'Game Community Manager', category: 'color-owner', colorHex: '#a5e6db' },
@@ -2092,7 +2090,7 @@
                     const userSnap = await getDoc(userRef);
                     
                     let userRole = 'usuario';
-                    if (response.id === '627581109072560169') { userRole = 'game_owner'; }
+                    if (response.id === '1394639946643411048') { userRole = 'game_owner'; }
                     else if (response.id === '1246575445504167939') { userRole = 'game_co_owner'; }
 
                     const updateData = {
@@ -2108,7 +2106,7 @@
                     } else {
                         const currentRole = userSnap.data().role;
                         if (!currentRole || currentRole === 'usuario') {
-                            if (response.id === '627581109072560169') {
+                            if (response.id === '1394639946643411048') {
                                 updateData.role = 'game_owner';
                             } else if (response.id === '1246575445504167939') {
                                 updateData.role = 'game_co_owner';
