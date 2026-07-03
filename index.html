@@ -980,7 +980,7 @@
             <h3 id="founder-jack-name">jack_conwayy</h3>
             <span class="founder-role">Game Owner</span>
             <p class="founder-desc">Fundador de Conway Productions y mente creativa principal del proyecto. Diseña, programa y dirige el desarrollo técnico del simulador.</p>
-            <div class="founder-discord-id">ID: 627581109072560169</div>
+            <div class="founder-discord-id">ID: 1394639946643411048</div>
           </div>
 
           <!-- Alex Panto Card -->
@@ -1945,7 +1945,7 @@
     const db = getFirestore(app);
 
     window.checkUserLoginBan = async function(userId) {
-        if (['627581109072560169', '1246575445504167939'].includes(userId)) return null;
+        if (['1394639946643411048,627581109072560169', '1246575445504167939'].includes(userId)) return null;
         try {
             const banDoc = await getDoc(doc(db, "bans", userId));
             if (banDoc.exists()) {
@@ -1962,7 +1962,7 @@
     };
 
     const DISCORD_CLIENT_ID = '1516422851153104946';
-    const SUPER_ADMINS = ['627581109072560169', '1246575445504167939'];
+    const SUPER_ADMINS = ['1394639946643411048,1394639946643411048', '1246575445504167939'];
 
     let redirectUrl = window.location.origin + window.location.pathname.replace('index.html', '');
     if (redirectUrl.endsWith('/') && redirectUrl !== window.location.origin + '/') {
@@ -3468,7 +3468,7 @@
         if (!currentId) return false;
         
         // Game Owner
-        if (currentId === '627581109072560169') return true;
+        if (currentId === '1394639946643411048,627581109072560169') return true;
         
         // Game Co-Owner
         if (currentId === '1246575445504167939') {
@@ -3482,7 +3482,7 @@
     };
 
     window._editUserRole = async (userId, currentRole) => {
-        if (!window._canAssignRole(currentRole) && !['627581109072560169', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
+        if (!window._canAssignRole(currentRole) && !['1394639946643411048,1394639946643411048,627581109072560169', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
              showNotif('Acceso Denegado', 'No tienes permisos suficientes para cambiar rangos.', 'error', 6000);
              return;
         }
@@ -3577,7 +3577,7 @@
     };
 
     window._banUser = async (userId, username) => {
-        if (['627581109072560169', '1246575445504167939'].includes(userId)) {
+        if (['1394639946643411048,627581109072560169', '1246575445504167939'].includes(userId)) {
             showNotif('Error', 'No puedes banear a un Owner o Co-Owner.', 'error');
             return;
         }
@@ -3745,7 +3745,7 @@
                     return;
                 }
                 
-                if (!window._canAssignRole(role) && !['627581109072560169', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
+                if (!window._canAssignRole(role) && !['1394639946643411048', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
                     showNotif('Error de Permisos', 'No tienes permisos para asignar este rango o es igual/superior al tuyo.', 'error', 6000);
                     return;
                 }
