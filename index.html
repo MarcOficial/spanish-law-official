@@ -980,7 +980,7 @@
             <h3 id="founder-jack-name">jack_conwayy</h3>
             <span class="founder-role">Game Owner</span>
             <p class="founder-desc">Fundador de Conway Productions y mente creativa principal del proyecto. Diseña, programa y dirige el desarrollo técnico del simulador.</p>
-            <div class="founder-discord-id">ID: 1394639946643411048</div>
+            <div class="founder-discord-id">ID: 627581109072560169</div>
           </div>
 
           <!-- Alex Panto Card -->
@@ -1945,7 +1945,6 @@
     const db = getFirestore(app);
 
     window.checkUserLoginBan = async function(userId) {
-        if (['1394639946643411048,627581109072560169', '1246575445504167939'].includes(userId)) return null;
         try {
             const banDoc = await getDoc(doc(db, "bans", userId));
             if (banDoc.exists()) {
@@ -1962,7 +1961,7 @@
     };
 
     const DISCORD_CLIENT_ID = '1516422851153104946';
-    const SUPER_ADMINS = ['1394639946643411048,1394639946643411048', '1246575445504167939'];
+    const SUPER_ADMINS = ['1394639946643411048', '1394639946643411048'];
 
     let redirectUrl = window.location.origin + window.location.pathname.replace('index.html', '');
     if (redirectUrl.endsWith('/') && redirectUrl !== window.location.origin + '/') {
@@ -1977,9 +1976,7 @@
     const cardUserManagement = document.getElementById('card-user-management');
 
     // ROLE DEFINITIONS
-    const ROLES_DATA = [
-      { id: 'usuario', name: 'Usuario', category: 'color-user', colorHex: '#aaaaaa' },
-      
+    const ROLES_DATA = [      
       { id: 'game_owner', name: 'Game Owner', category: 'color-owner', colorHex: '#ffd000' },
       { id: 'game_co_owner', name: 'Game Co-Owner', category: 'color-owner', colorHex: '#ff8400' },
       { id: 'game_community_manager', name: 'Game Community Manager', category: 'color-owner', colorHex: '#a5e6db' },
@@ -2048,32 +2045,10 @@
                 
                 window.currentDiscordUser = response;
                 
-                let avatarUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
-                try {
-                    avatarUrl = response.avatar 
-                      ? (response.avatar.startsWith('a_') ? `https://cdn.discordapp.com/avatars/${response.id}/${response.avatar}.gif` : `https://cdn.discordapp.com/avatars/${response.id}/${response.avatar}.png`) 
-                      : `https://cdn.discordapp.com/embed/avatars/${response.discriminator === "0" ? Number(BigInt(response.id) >> 22n) % 6 : parseInt(response.discriminator) % 5}.png`;
-                } catch(e) {
-                    console.error("Error generating avatar URL:", e);
-                }
-
                 // --- LOGIN BAN CHECK ---
                 const banData = await window.checkUserLoginBan(response.id);
                 if (banData) {
                     let expMsg = banData.type === 'perm' ? 'PERMANENTE' : `HASTA ${new Date(banData.expiresAt).toLocaleString()}`;
-                    
-                    // Actualizar el perfil del usuario para que muestre que está baneado
-                    try {
-                        const userRef = doc(db, 'users', response.id);
-                        await setDoc(userRef, {
-                            isBanned: true,
-                            banReason: banData.reason,
-                            banDuration: expMsg,
-                            username: response.global_name || response.username,
-                            avatar: avatarUrl
-                        }, { merge: true });
-                    } catch(e) {}
-
                     alert(`🚨 HAS SIDO BLOQUEADO 🚨\n\nNo puedes iniciar sesión en esta plataforma.\nDuración: ${expMsg}\nMotivo: ${banData.reason}\n\nSi crees que es un error, contacta con el soporte.`);
                     localStorage.removeItem('discord_token');
                     localStorage.removeItem('discord_token_type');
@@ -2082,22 +2057,29 @@
                 }
 
                 // --- REAL-TIME BAN ENFORCEMENT ---
-                if (!['627581109072560169', '1246575445504167939'].includes(response.id)) {
-                    onSnapshot(doc(db, "bans", response.id), (banDoc) => {
-                        if (banDoc.exists()) {
-                            const data = banDoc.data();
-                            if (data.type === 'perm' || (data.type === 'temp' && Date.now() < data.expiresAt)) {
-                                let expMsg = data.type === 'perm' ? 'PERMANENTE' : `HASTA ${new Date(data.expiresAt).toLocaleString()}`;
-                                alert(`🚨 HAS SIDO BLOQUEADO 🚨\n\nNo puedes continuar en esta plataforma.\nDuración: ${expMsg}\nMotivo: ${data.reason}`);
-                                localStorage.removeItem('discord_token');
-                                localStorage.removeItem('discord_token_type');
-                                window.location.reload();
-                            }
+                onSnapshot(doc(db, "bans", response.id), (banDoc) => {
+                    if (banDoc.exists()) {
+                        const data = banDoc.data();
+                        if (data.type === 'perm' || (data.type === 'temp' && Date.now() < data.expiresAt)) {
+                            let expMsg = data.type === 'perm' ? 'PERMANENTE' : `HASTA ${new Date(data.expiresAt).toLocaleString()}`;
+                            alert(`🚨 HAS SIDO BLOQUEADO 🚨\n\nNo puedes continuar en esta plataforma.\nDuración: ${expMsg}\nMotivo: ${data.reason}`);
+                            localStorage.removeItem('discord_token');
+                            localStorage.removeItem('discord_token_type');
+                            window.location.reload();
                         }
-                    });
-                }
+                    }
+                });
 
                 localStorage.setItem('discord_user_id', response.id);
+                
+                let avatarUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
+                try {
+                    avatarUrl = response.avatar 
+                      ? (response.avatar.startsWith('a_') ? `https://cdn.discordapp.com/avatars/${response.id}/${response.avatar}.gif` : `https://cdn.discordapp.com/avatars/${response.id}/${response.avatar}.png`) 
+                      : `https://cdn.discordapp.com/embed/avatars/${response.discriminator === "0" ? Number(BigInt(response.id) >> 22n) % 6 : parseInt(response.discriminator) % 5}.png`;
+                } catch(e) {
+                    console.error("Error generating avatar URL:", e);
+                }
 
                 if (discordAvatar) discordAvatar.src = avatarUrl;
                 if (discordUsername) discordUsername.textContent = response.global_name || response.username;
@@ -2108,17 +2090,14 @@
                     const userSnap = await getDoc(userRef);
                     
                     let userRole = 'usuario';
-                    if (response.id === '627581109072560169') { userRole = 'game_owner'; }
+                    if (response.id === '1394639946643411048') { userRole = 'game_owner'; }
                     else if (response.id === '1246575445504167939') { userRole = 'game_co_owner'; }
 
                     const updateData = {
                         id: response.id,
                         username: response.global_name || response.username,
                         avatar: avatarUrl,
-                        lastLogin: new Date().toISOString(),
-                        isBanned: false,
-                        banReason: "",
-                        banDuration: ""
+                        lastLogin: new Date().toISOString()
                     };
 
                     if (!userSnap.exists()) {
@@ -2127,7 +2106,7 @@
                     } else {
                         const currentRole = userSnap.data().role;
                         if (!currentRole || currentRole === 'usuario') {
-                            if (response.id === '627581109072560169') {
+                            if (response.id === '1394639946643411048') {
                                 updateData.role = 'game_owner';
                             } else if (response.id === '1246575445504167939') {
                                 updateData.role = 'game_co_owner';
@@ -2235,7 +2214,7 @@
                     }
                     
                     // Solo Game Owner y Game Co-Owner pueden ver Gestión de Usuarios
-                    const allowedIds = ['1246575445504167939', '627581109072560169'];
+                    const allowedIds = ['1394639946643411048', '1394639946643411048'];
                     if (allowedIds.includes(response.id)) {
                         const ownerCard = document.getElementById('card-staff-list');
                         if (ownerCard) ownerCard.classList.remove('hidden');
@@ -2391,59 +2370,49 @@
 
         // PROFILE INFO
         const candidateName = get('name','nombre') || 'Sin nombre';
-        const evNameEl = document.getElementById('ev-name');
-        if (evNameEl) evNameEl.textContent = candidateName;
+        document.getElementById('ev-name').textContent = candidateName;
         const evHeaderName = document.getElementById('ev-header-name');
         if (evHeaderName) evHeaderName.textContent = candidateName;
-        
-        const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-        
-        setElText('ev-discord', get('discordUser') || '—');
-        setElText('ev-discord-id', get('discordId') || '—');
-        setElText('ev-roblox', get('robloxUser') || '—');
-        setElText('ev-roblox-id', get('robloxId') || '—');
-        
-        const rblxUrlEl = document.getElementById('ev-roblox-url');
-        if (rblxUrlEl) rblxUrlEl.href = get('robloxUrl') || '#';
-        
-        setElText('ev-age', get('age','edad') || '?');
-        setElText('ev-res', get('country','paisResidencia') || '—');
-        setElText('ev-dob', get('birthdate','fechaNacimiento') || '—');
-        setElText('ev-gender', get('gender','genero') || '—');
-        setElText('ev-nat', get('nationality','nacionalidad') || '—');
-        setElText('ev-es', get('spanish','nivelEspanol') || '—');
-        setElText('ev-en', get('english','nivelIngles') || '—');
-        
+        document.getElementById('ev-discord').textContent = get('discordUser') || '—';
+        document.getElementById('ev-discord-id').textContent = get('discordId') || '—';
+        document.getElementById('ev-roblox').textContent = get('robloxUser') || '—';
+        document.getElementById('ev-roblox-id').textContent = get('robloxId') || '—';
+        document.getElementById('ev-roblox-url').href = get('robloxUrl') || '#';
+        document.getElementById('ev-age').textContent = get('age','edad') || '?';
+        document.getElementById('ev-res').textContent = get('country','paisResidencia') || '—';
+        document.getElementById('ev-dob').textContent = get('birthdate','fechaNacimiento') || '—';
+        document.getElementById('ev-gender').textContent = get('gender','genero') || '—';
+        document.getElementById('ev-nat').textContent = get('nationality','nacionalidad') || '—';
+        document.getElementById('ev-es').textContent = get('spanish','nivelEspanol') || '—';
+        document.getElementById('ev-en').textContent = get('english','nivelIngles') || '—';
         const mic = get('mic','microfono');
-        setElText('ev-mic', mic === 'si' || mic === 'Sí' ? '✅ Sí' : mic ? mic : '—');
-        setElText('ev-hours', get('hours','horasDia') ? get('hours','horasDia') + 'h' : '—');
+        document.getElementById('ev-mic').textContent = mic === 'si' || mic === 'Sí' ? '✅ Sí' : mic ? mic : '—';
+        document.getElementById('ev-hours').textContent = get('hours','horasDia') ? get('hours','horasDia') + 'h' : '—';
         const sched = data.schedule ? data.schedule.join(', ') : get('horarios','schedule') || '—';
-        setElText('ev-schedule', sched);
+        document.getElementById('ev-schedule').textContent = sched;
 
         // TIMESTAMP
         if (data.timestamp) {
             const d = new Date(data.timestamp);
-            setElText('ev-timestamp', d.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }));
+            document.getElementById('ev-timestamp').textContent = d.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
         }
 
         // AVATAR — Use stored avatar URL or Discord CDN default
         const discordId = get('discordId');
         const storedAvatar = get('discordAvatar');
         const avatarEl = document.getElementById('ev-avatar');
-        if (avatarEl) {
-            if (storedAvatar) {
-                avatarEl.src = storedAvatar;
-                avatarEl.onerror = () => {
-                    const defaultIdx = discordId ? parseInt(discordId) % 6 : 0;
-                    avatarEl.src = `https://cdn.discordapp.com/embed/avatars/${defaultIdx}.png`;
-                    avatarEl.onerror = null;
-                };
-            } else if (discordId && discordId.length > 5) {
-                const defaultIdx = parseInt(discordId) % 6;
+        if (storedAvatar) {
+            avatarEl.src = storedAvatar;
+            avatarEl.onerror = () => {
+                const defaultIdx = discordId ? parseInt(discordId) % 6 : 0;
                 avatarEl.src = `https://cdn.discordapp.com/embed/avatars/${defaultIdx}.png`;
-            } else {
-                avatarEl.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-            }
+                avatarEl.onerror = null;
+            };
+        } else if (discordId && discordId.length > 5) {
+            const defaultIdx = parseInt(discordId) % 6;
+            avatarEl.src = `https://cdn.discordapp.com/embed/avatars/${defaultIdx}.png`;
+        } else {
+            avatarEl.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
         }
 
         // PERSONAL GRID
@@ -3393,7 +3362,7 @@
 
         async function loadFoundersData() {
             try {
-                const jackRef = doc(db, "users", "1394639946643411048,627581109072560169");
+                const jackRef = doc(db, "users", "627581109072560169");
                 const jackSnap = await getDoc(jackRef);
                 if (jackSnap.exists()) {
                     const data = jackSnap.data();
@@ -3463,30 +3432,7 @@
     // ============================================================
     //  SHARED STAFF ACTION MODALS (available globally)
     // ============================================================
-    window._canAssignRole = (requestedRole) => {
-        const currentId = window.currentDiscordUser?.id;
-        if (!currentId) return false;
-        
-        // Game Owner
-        if (currentId === '1394639946643411048,627581109072560169') return true;
-        
-        // Game Co-Owner
-        if (currentId === '1246575445504167939') {
-            // Can't assign Game Owner (index 0 in ROLES_DATA). Game Co-Owner is index 1.
-            if (requestedRole === 'game_owner') return false;
-            return true;
-        }
-        
-        // Anyone else
-        return false;
-    };
-
     window._editUserRole = async (userId, currentRole) => {
-        if (!window._canAssignRole(currentRole) && !['1394639946643411048,1394639946643411048,627581109072560169', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
-             showNotif('Acceso Denegado', 'No tienes permisos suficientes para cambiar rangos.', 'error', 6000);
-             return;
-        }
-
         const opts = ROLES_DATA.map(r => `<option value="${r.id}" style="color: ${r.colorHex || '#fff'}; font-weight: 700;" ${r.id === currentRole ? 'selected' : ''}>${r.name}</option>`).join('');
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);';
@@ -3504,12 +3450,6 @@
         modal.querySelector('#_edit-role-cancel').onclick = () => modal.remove();
         modal.querySelector('#_edit-role-ok').onclick = async () => {
             const newRole = modal.querySelector('#_edit-role-sel').value;
-            
-            if (!window._canAssignRole(newRole)) {
-                 showNotif('Error de Permisos', 'No puedes asignar un rango igual o superior al tuyo.', 'error', 6000);
-                 return;
-            }
-
             try {
                 await updateDoc(doc(db,'users',userId), { role: newRole });
                 showNotif('Rango actualizado ✅', `Cambiado a ${ROLES_DATA.find(r=>r.id===newRole)?.name || newRole}`, 'success');
@@ -3518,73 +3458,7 @@
         };
     };
 
-    // ============================================================
-    // WEBHOOK LOGGING (BANS)
-    // ============================================================
-    const BAN_WEBHOOK_URL = 'https://discord.com/api/webhooks/1508070545449553940/raGFMKe_DqMUv1gJfY9b5T5--JCzTJ7-T5kRZhOe8uhuCuO2JNMnZS52kDa_K9S3xDsk';
-
-    window._sendLog = async (type, targetId, targetUsername, reason, duration) => {
-        if (!BAN_WEBHOOK_URL || BAN_WEBHOOK_URL.includes('AQUI_PON_EL_LINK')) return;
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            const ip = ipData.ip || 'Desconocida';
-            
-            const staff = window.currentDiscordUser;
-            const staffName = staff ? staff.username : 'Desconocido';
-            const staffId = staff ? staff.id : 'Desconocido';
-            const staffAvatar = staff ? (staff.avatarUrl || `https://cdn.discordapp.com/embed/avatars/0.png`) : '';
-            
-            let embed = {
-                title: type === 'attempt' ? '⚠️ Intento de Ban' : '🔨 Usuario Baneado',
-                color: type === 'attempt' ? 16753920 : 16711680,
-                author: { name: staffName, icon_url: staffAvatar },
-                fields: [
-                    { name: '👤 Staff (Ejecutor)', value: `<@${staffId}>\nID: ${staffId}\nIP: ||${ip}||`, inline: true },
-                    { name: '🎯 Usuario Objetivo', value: `<@${targetId}>\n@${targetUsername}\nID: ${targetId}`, inline: true },
-                ],
-                footer: { text: 'Spanish Law Roleplay System' },
-                timestamp: new Date().toISOString()
-            };
-            
-            if (type === 'success') {
-                embed.fields.push({ name: '📝 Motivo', value: reason || 'Ninguno' });
-                embed.fields.push({ name: '⏳ Duración', value: duration || 'Permanente' });
-            }
-            
-            await fetch(BAN_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ embeds: [embed] })
-            });
-        } catch(e) { console.error('Error enviando webhook', e); }
-    };
-
-    window._unbanUser = async (userId, username) => {
-        if (confirm(`¿Estás seguro de que quieres desbanear a @${username}?`)) {
-            try {
-                await deleteDoc(doc(db, "bans", userId));
-                await updateDoc(doc(db, "users", userId), {
-                    isBanned: false,
-                    banReason: "",
-                    banDuration: ""
-                });
-                showNotif('Desbaneo exitoso', `El usuario ${username} ha sido desbaneado.`, 'success');
-            } catch(e) {
-                showNotif('Error', 'No se pudo desbanear al usuario.', 'error');
-            }
-        }
-    };
-
     window._banUser = async (userId, username) => {
-        if (['1394639946643411048,627581109072560169', '1246575445504167939'].includes(userId)) {
-            showNotif('Error', 'No puedes banear a un Owner o Co-Owner.', 'error');
-            return;
-        }
-
-        // Log the attempt
-        window._sendLog('attempt', userId, username, '', '');
-
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);';
         modal.innerHTML = `
@@ -3623,17 +3497,6 @@
             try {
                 await setDoc(doc(db,'bans',userId), banData);
                 const durStr = banType === 'perm' ? 'PERMANENTE' : Math.round((banData.expiresAt - Date.now()) / 86400000) + ' días';
-                
-                // Actualizar también la colección users para que salga en el perfil de la base de datos
-                await updateDoc(doc(db, 'users', userId), {
-                    isBanned: true,
-                    banReason: reason,
-                    banDuration: durStr
-                });
-
-                // Log the successful ban
-                window._sendLog('success', userId, username, reason, durStr);
-                
                 showNotif('Usuario baneado 🔨', `@${username} — ${durStr}`, 'success');
             } catch(e) { showNotif('Error', e.message, 'error'); }
             modal.remove();
@@ -3733,47 +3596,6 @@
 
     function setupStaffListApp() {
         const container = document.getElementById('staff-groups-container');
-        
-        const addStaffBtn = document.getElementById('btn-add-staff');
-        if (addStaffBtn && !addStaffBtn.dataset.listening) {
-            addStaffBtn.dataset.listening = "true";
-            addStaffBtn.addEventListener('click', async () => {
-                const id = document.getElementById('staff-add-id').value.trim();
-                const role = document.getElementById('staff-add-role').value;
-                if (!id || isNaN(id)) {
-                    showNotif('ID no válida', 'Por favor ingresa una ID de Discord numérica y válida.', 'warning', 5000);
-                    return;
-                }
-                
-                if (!window._canAssignRole(role) && !['1394639946643411048', '1246575445504167939'].includes(window.currentDiscordUser?.id)) {
-                    showNotif('Error de Permisos', 'No tienes permisos para asignar este rango o es igual/superior al tuyo.', 'error', 6000);
-                    return;
-                }
-                
-                addStaffBtn.textContent = 'Guardando...';
-                try {
-                    const userRef = doc(db, "users", id);
-                    const snap = await getDoc(userRef);
-                    if (snap.exists()) {
-                        await updateDoc(userRef, { role: role });
-                    } else {
-                        await setDoc(userRef, {
-                            id: id,
-                            username: "Pendiente de conexión...",
-                            avatar: "https://cdn.discordapp.com/embed/avatars/0.png",
-                            role: role,
-                            createdAt: new Date().toISOString()
-                        });
-                    }
-                    document.getElementById('staff-add-id').value = '';
-                    showNotif('Rango asignado', 'Cuando este usuario inicie sesión, se actualizará su perfil automáticamente.', 'success', 5000);
-                } catch(err) {
-                    showNotif('Error al guardar', err.message, 'error', 6000);
-                }
-                addStaffBtn.textContent = '➕ Registrar';
-            });
-        }
-
         onSnapshot(collection(db, "users"), (snapshot) => {
             const staffByRole = {};
             const normalUsers = [];
@@ -3826,13 +3648,10 @@
                             </div>
                         </div>
                         <div class="staff-member-right" style="display:flex;align-items:center;gap:8px;">
-                            <span class="staff-status" style="color: ${member.isBanned ? '#ff4b6e' : (isPending ? 'rgba(255,255,255,0.2)' : 'rgba(0,255,136,0.6)')};">${member.isBanned ? 'BANEADO' : (isPending ? 'PENDIENTE' : 'REGISTRADO')}</span>
+                            <span class="staff-status" style="color: ${isPending ? 'rgba(255,255,255,0.2)' : 'rgba(0,255,136,0.6)'};">${isPending ? 'PENDIENTE' : 'REGISTRADO'}</span>
                             <span class="role-badge ${roleDef.category}">${roleDef.name}</span>
                             <button onclick="window._editUserRole('${member._docId}','${member.role || 'usuario'}')" style="background:rgba(0,170,255,0.1);border:1px solid rgba(0,170,255,0.25);color:#00aaff;padding:5px 11px;border-radius:7px;font-size:0.68rem;font-weight:800;font-family:inherit;cursor:pointer;letter-spacing:0.05em;text-transform:uppercase;transition:0.2s;" onmouseover="this.style.background='rgba(0,170,255,0.2)'" onmouseout="this.style.background='rgba(0,170,255,0.1)'">✏️</button>
-                            ${member.isBanned
-                                ? `<button onclick="window._unbanUser('${member._docId}','${(member.username || '').replace(/'/g,'')}')" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:#ffd700;padding:5px 11px;border-radius:7px;font-size:0.68rem;font-weight:800;font-family:inherit;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.1)'" title="Desbanear Usuario">🔓</button>`
-                                : `<button onclick="window._banUser('${member._docId}','${(member.username || '').replace(/'/g,'')}')" style="background:rgba(255,75,110,0.1);border:1px solid rgba(255,75,110,0.25);color:#ff4b6e;padding:5px 11px;border-radius:7px;font-size:0.68rem;font-weight:800;font-family:inherit;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='rgba(255,75,110,0.2)'" onmouseout="this.style.background='rgba(255,75,110,0.1)'" title="Banear Usuario">🔨</button>`
-                            }
+                            <button onclick="window._banUser('${member._docId}','${(member.username || '').replace(/'/g,'')}')" style="background:rgba(255,75,110,0.1);border:1px solid rgba(255,75,110,0.25);color:#ff4b6e;padding:5px 11px;border-radius:7px;font-size:0.68rem;font-weight:800;font-family:inherit;cursor:pointer;transition:0.2s;" onmouseover="this.style.background='rgba(255,75,110,0.2)'" onmouseout="this.style.background='rgba(255,75,110,0.1)'">🔨</button>
                         </div>
                     `;
                     groupDiv.appendChild(memberRow);
@@ -3937,7 +3756,7 @@
                             </div>
                         </div>
                         <div class="staff-member-right" style="display:flex;align-items:center;gap:8px;">
-                            <span class="staff-status" style="color: ${member.isBanned ? '#ff4b6e' : (isPending ? 'rgba(255,255,255,0.2)' : 'rgba(0,255,136,0.6)')};">${member.isBanned ? 'BANEADO' : (isPending ? 'PENDIENTE' : 'REGISTRADO')}</span>
+                            <span class="staff-status" style="color: ${isPending ? 'rgba(255,255,255,0.2)' : 'rgba(0,255,136,0.6)'};">${isPending ? 'PENDIENTE' : 'REGISTRADO'}</span>
                             <span class="role-badge ${roleDef.category}">${roleDef.name}</span>
                         </div>
                     `;
