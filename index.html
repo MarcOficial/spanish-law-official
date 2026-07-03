@@ -302,6 +302,7 @@
     .card-forms:hover::after { background: var(--accent-red); box-shadow: 0 0 20px var(--accent-red); }
     .card-tickets:hover::after { background: #f59e0b; box-shadow: 0 0 20px #f59e0b; }
     .card-staff-list:hover::after { background: #a855f7; box-shadow: 0 0 20px #a855f7; }
+    .card-view-staff:hover::after { background: #10b981; box-shadow: 0 0 20px #10b981; }
     .card-user-management:hover::after { background: #ef4444; box-shadow: 0 0 20px #ef4444; }
     .card-roblox-search:hover::after { background: #3b82f6; box-shadow: 0 0 20px #3b82f6; }
     .card-owners-panel:hover::after { background: #eab308; box-shadow: 0 0 20px #eab308; }
@@ -312,6 +313,7 @@
     .card-forms .dash-icon { color: var(--accent-red); background: linear-gradient(135deg, rgba(255, 75, 110, 0.15), rgba(255, 75, 110, 0.05)); }
     .card-tickets .dash-icon { color: #f59e0b; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); }
     .card-staff-list .dash-icon { color: #a855f7; background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.05)); }
+    .card-view-staff .dash-icon { color: #10b981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); }
     .card-user-management .dash-icon { color: #ef4444; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)); }
     .card-roblox-search .dash-icon { color: #3b82f6; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); }
     .card-owners-panel .dash-icon { color: #eab308; background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(234, 179, 8, 0.05)); }
@@ -1958,7 +1960,7 @@
         return null;
     };
 
-    const DISCORD_CLIENT_ID = '1511018665909289151';
+    const DISCORD_CLIENT_ID = '1516422851153104946';
     const SUPER_ADMINS = ['1394639946643411048', '1394639946643411048'];
 
     let redirectUrl = window.location.origin + window.location.pathname.replace('index.html', '');
@@ -1974,7 +1976,9 @@
     const cardUserManagement = document.getElementById('card-user-management');
 
     // ROLE DEFINITIONS
-    const ROLES_DATA = [      
+    const ROLES_DATA = [
+      { id: 'usuario', name: 'Usuario', category: 'color-user', colorHex: '#aaaaaa' },
+      
       { id: 'game_owner', name: 'Game Owner', category: 'color-owner', colorHex: '#ffd000' },
       { id: 'game_co_owner', name: 'Game Co-Owner', category: 'color-owner', colorHex: '#ff8400' },
       { id: 'game_community_manager', name: 'Game Community Manager', category: 'color-owner', colorHex: '#a5e6db' },
@@ -2088,7 +2092,7 @@
                     const userSnap = await getDoc(userRef);
                     
                     let userRole = 'usuario';
-                    if (response.id === '1394639946643411048') { userRole = 'game_owner'; }
+                    if (response.id === '627581109072560169') { userRole = 'game_owner'; }
                     else if (response.id === '1246575445504167939') { userRole = 'game_co_owner'; }
 
                     const updateData = {
@@ -2104,7 +2108,7 @@
                     } else {
                         const currentRole = userSnap.data().role;
                         if (!currentRole || currentRole === 'usuario') {
-                            if (response.id === '1394639946643411048') {
+                            if (response.id === '627581109072560169') {
                                 updateData.role = 'game_owner';
                             } else if (response.id === '1246575445504167939') {
                                 updateData.role = 'game_co_owner';
@@ -2191,7 +2195,7 @@
                     }
 
                     // --- PERMISSIONS LOGIC ---
-                    const isFounder = S.includes(response.id);
+                    const isFounder = SUPER_ADMINS.includes(response.id);
                     const userData = freshUserSnap.exists() ? freshUserSnap.data() : null;
                     const isStaff = userData && (
                         (userData.role && userData.role !== 'usuario') ||
@@ -2201,6 +2205,8 @@
 
                     if (isFounder || isStaff) {
                         staffPanelBtn.classList.remove('hidden');
+                        const viewStaffCard = document.getElementById('card-view-staff');
+                        if (viewStaffCard) viewStaffCard.classList.remove('hidden');
                     }
                     // Show owner-only cards in dashboard
                     const isOwnerLevel = isFounder || (userData && ['game_owner','game_co_owner','game_community_manager','game_manager','game_director'].includes(userData.role));
@@ -2304,12 +2310,12 @@
         const cards = document.querySelectorAll('[data-post-status]');
         const groups = document.querySelectorAll('[data-post-group]');
         if (status === 'all') {
-            cards.forEach(c => c.style.display = '');
+            cards.forEach(c => c.style.display = 'flex');
             groups.forEach(g => g.style.display = '');
             document.querySelectorAll('[data-post-section]').forEach(s => s.style.display = '');
         } else {
             cards.forEach(c => {
-                c.style.display = (c.dataset.postStatus === status) ? '' : 'none';
+                c.style.display = (c.dataset.postStatus === status) ? 'flex' : 'none';
             });
             groups.forEach(g => {
                 const visible = [...g.querySelectorAll('[data-post-status]')].some(c => c.dataset.postStatus === status);
@@ -3697,6 +3703,77 @@
 
 
     // ============================================================
+    // VIEW STAFF LIST (READ-ONLY)
+    // ============================================================
+    function setupViewStaffListApp() {
+        const container = document.getElementById('view-staff-groups-container');
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            const staffByRole = {};
+            const normalUsers = [];
+
+            snapshot.forEach((docSnap) => {
+                const data = { ...docSnap.data(), _docId: docSnap.id };
+                const role = data.role || 'usuario';
+                if (role === 'usuario') {
+                    normalUsers.push(data);
+                } else {
+                    if (!staffByRole[role]) staffByRole[role] = [];
+                    staffByRole[role].push(data);
+                }
+            });
+
+            container.innerHTML = '';
+
+            let hasStaff = false;
+            ROLES_DATA.forEach(roleDef => {
+                if (roleDef.id === 'usuario') return;
+                const members = staffByRole[roleDef.id];
+                if (!members || members.length === 0) return;
+                hasStaff = true;
+
+                let borderClass = 'staff-group-admin';
+                if (roleDef.category === 'color-owner') borderClass = 'staff-group-owner';
+                if (roleDef.category === 'color-dev') borderClass = 'staff-group-dev';
+                if (roleDef.category === 'color-mod') borderClass = 'staff-group-mod';
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'staff-group';
+                groupDiv.innerHTML = `
+                    <div class="staff-group-header ${borderClass}">
+                        <span>| ${roleDef.name}</span>
+                        <span class="member-count">${members.length} miembro${members.length > 1 ? 's' : ''}</span>
+                    </div>
+                `;
+                members.forEach(member => {
+                    const isPending = !member.username || member.username === 'Pendiente de conexión...';
+                    const avatarSrc = member.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                    const memberRow = document.createElement('div');
+                    memberRow.className = 'staff-member-card';
+                    memberRow.innerHTML = `
+                        <div class="staff-member-info">
+                            <img src="${avatarSrc}" alt="Avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                            <div class="staff-member-details">
+                                <h4>${member.username || 'Sin nombre'}</h4>
+                                <p>@${isPending ? 'esperando' : (member.username || '').toLowerCase().replace(/ /g, '')} · ID ${member._docId}</p>
+                            </div>
+                        </div>
+                        <div class="staff-member-right" style="display:flex;align-items:center;gap:8px;">
+                            <span class="staff-status" style="color: ${isPending ? 'rgba(255,255,255,0.2)' : 'rgba(0,255,136,0.6)'};">${isPending ? 'PENDIENTE' : 'REGISTRADO'}</span>
+                            <span class="role-badge ${roleDef.category}">${roleDef.name}</span>
+                        </div>
+                    `;
+                    groupDiv.appendChild(memberRow);
+                });
+                container.appendChild(groupDiv);
+            });
+
+            if (!hasStaff) {
+                container.innerHTML = `<div style="text-align:center;padding:60px;color:rgba(255,255,255,0.2);"><div style="font-size:2rem;margin-bottom:12px;">👥</div><div style="font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">No hay staff registrado</div></div>`;
+            }
+        });
+    }
+
+    // ============================================================
     //  OWNERS PANEL APP LOGIC
     // ============================================================
     function setupOwnersPanelApp() {
@@ -4052,12 +4129,12 @@
         const cards = document.querySelectorAll('[data-post-status]');
         const groups = document.querySelectorAll('[data-post-group]');
         if (status === 'all') {
-            cards.forEach(c => c.style.display = '');
+            cards.forEach(c => c.style.display = 'flex');
             groups.forEach(g => g.style.display = '');
             document.querySelectorAll('[data-post-section]').forEach(s => s.style.display = '');
         } else {
             cards.forEach(c => {
-                c.style.display = (c.dataset.postStatus === status) ? '' : 'none';
+                c.style.display = (c.dataset.postStatus === status) ? 'flex' : 'none';
             });
             groups.forEach(g => {
                 const visible = [...g.querySelectorAll('[data-post-status]')].some(c => c.dataset.postStatus === status);
@@ -4448,6 +4525,13 @@
         });
     }
 
+    const cardViewStaff = document.getElementById('card-view-staff');
+    if (cardViewStaff) {
+        cardViewStaff.addEventListener('click', () => {
+            openDashPanel('view-staff-modal', () => { setupViewStaffListApp(); });
+        });
+    }
+
     const cardUserMgmt = document.getElementById('card-user-management');
     if (cardUserMgmt) {
         cardUserMgmt.addEventListener('click', () => {
@@ -4466,6 +4550,9 @@
     });
     document.getElementById('back-to-dashboard-owners') && (document.getElementById('back-to-dashboard-owners').onclick = () => {
         closeDashPanel('owners-panel-modal');
+    });
+    document.getElementById('back-to-dashboard-view-staff') && (document.getElementById('back-to-dashboard-view-staff').onclick = () => {
+        closeDashPanel('view-staff-modal');
     });
 
 
@@ -4573,6 +4660,20 @@
       });
     });
 
+    window.savePostulationDataToFirebase = async function(formData) {
+        try {
+            // Guardar datos adicionales
+            formData.timestamp = new Date().toISOString();
+            formData.status = 'pending';
+            
+            // Guardar en la colección 'examenes'
+            const docRef = await addDoc(collection(db, "examenes"), formData);
+            console.log("Postulación enviada correctamente con ID:", docRef.id);
+        } catch (error) {
+            console.error("Error enviando postulación a Firebase:", error);
+            alert("Hubo un error al enviar tu postulación. Por favor, contacta a un administrador.");
+        }
+    };
   </script>
 
   <!-- Custom Confirm Modal -->
@@ -4638,6 +4739,7 @@
     width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   }
   #settings-modal.active .modal-content { transform: scale(1); opacity: 1; }
+  .card-view-staff { background: #1a1c24; }
 </style>
 <div id="settings-modal">
     <div class="modal-content" style="max-width: 500px; padding: 0; background: #15171e; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
@@ -4748,6 +4850,14 @@
             <h3>Gestión de Usuarios</h3>
             <p>Añade o quita personas del equipo, cambia sus rangos y gestiona sus permisos.</p>
             <div class="dash-tag">GAME OWNER / CO-OWNER</div>
+          </div>
+          
+          <!-- VER STAFF (READONLY) -->
+          <div class="dash-card card-view-staff hidden" id="card-view-staff">
+            <div class="dash-icon"><i class="fa-solid fa-clipboard-user"></i></div>
+            <h3>Lista Staff</h3>
+            <p>Consulta la lista completa del equipo administrativo y revisa sus rangos actuales.</p>
+            <div class="dash-tag">TODO EL EQUIPO</div>
           </div>
           
           <!-- BANEOS -->
@@ -5124,6 +5234,24 @@
           </div>
 
           <div id="staff-groups-container" style="display: flex; flex-direction: column; gap: 20px;">
+            Cargando...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD APP: VIEW STAFF (READ-ONLY) -->
+    <div id="view-staff-modal" class="dashboard-app-container">
+      <div class="dash-app-header">
+        <div class="dash-app-header-left">
+          <button id="back-to-dashboard-view-staff" class="dash-back-btn">◀</button>
+          <span class="dash-app-title">👥 EQUIPO STAFF</span>
+        </div>
+      </div>
+      
+      <div class="dash-app-content">
+        <div style="width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: stretch;">
+          <div id="view-staff-groups-container" style="display: flex; flex-direction: column; gap: 20px;">
             Cargando...
           </div>
         </div>
