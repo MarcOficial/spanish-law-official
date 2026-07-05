@@ -2619,21 +2619,16 @@ if (document.readyState === "loading") {
 </script>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, query, where, orderBy, limit, arrayUnion, getCountFromServer, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA3JsbQH6vhfQ_x97ezESoFfWB_eXTIuKk",
-      authDomain: "spanish-law-role-play-database.firebaseapp.com",
-      projectId: "spanish-law-role-play-database",
-      storageBucket: "spanish-law-role-play-database.firebasestorage.app",
-      messagingSenderId: "163146942156",
-      appId: "1:163146942156:web:86624f0da2d06f31276469",
-      measurementId: "G-EG3HJHBECE"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  import { initializeApp, getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, query, where, orderBy, limit, arrayUnion, getCountFromServer, serverTimestamp, Timestamp } from "./supabase-firestore-shim.js";
+  
+      const firebaseConfig = {
+        supabaseUrl: "https://abiffgtoinhbccmcoblr.supabase.co",
+        supabaseKey: "sb_publishable_cHma7UTHoqPHd2kTyOKKng_-FW8SUWz"
+      };
+  
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
 
     window.checkUserLoginBan = async function(userId) {
         if (['627581109072560169', '1246575445504167939'].includes(userId)) return null;
